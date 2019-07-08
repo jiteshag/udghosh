@@ -485,7 +485,8 @@ app.post('/nossqRegister', function(req,res,next){
   app.post('/nossqRegistrationStep2', function(req,res,next){
   
     var item ={
-      PrincipalName : req.body.name,
+      PrincipalName : '',
+      userName : req.body.name,
       Mail : req.body.mail,
       password : req.body.password.toString(),
       NameOfSchool: '',
@@ -503,7 +504,7 @@ app.post('/nossqRegister', function(req,res,next){
     truecode = uid.substring(0,6);
   
     let ref = firestore.collection('nossqregistration').doc(uid);
-  
+  console.log("yah tak pahucha");
     let getDoc = ref.get()
     .then(doc => {
       if (!doc.exists) {
@@ -540,7 +541,7 @@ app.post('/nossqRegister', function(req,res,next){
     let ref = firestore.collection('nossqregistration').doc(uid);
   
     let getDoc = ref.get()
-    .then(doc => {
+    .then(doc => {    
       if (!doc.exists) {
   
         // no such user exists
@@ -588,9 +589,83 @@ app.post('/nossqRegister', function(req,res,next){
 ////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////  
 
+//nossq details editing rights
+app.post('/change1', function(req,res){
 
+  var check = encrypt(req.body.name, "nossq");
+  if(sessionStorage1.getItem(check) === null || sessionStorage1.getItem(check) === undefined){
+    res.render('index_4', {msg: 'Your session expired, please login again'});
+  }else{
 
+  var item = {};
 
+  if(req.body.p_n != ''){
+    item['PrincipalName'] = req.body.p_n;
+  };
+  if(req.body.n_o_s != ''){
+    item['NameOfSchool'] = req.body.n_o_s;
+  };
+  if(req.body.n_o_st != ''){
+    item['NoOfStudents'] = req.body.n_o_st;
+  };
+  if(req.body.p_c_n != ''){
+    item['Contact1'] = req.body.p_c_n;
+  };
+  if(req.body.a_c_n != ''){
+    item['Contact2'] = req.body.a_c_n;
+  };
+  if(req.body.c_s != ''){
+    item['City'] = req.body.c_s;
+  };
+  if(req.body.p_c != ''){
+    item['PIN'] = req.body.p_c;
+  };
+
+  var keys = encrypt(req.body.name, "nossq");
+  var pass = sessionStorage1.getItem(keys);
+
+  // generating user Id
+  uid = encrypt(req.body.name, pass['password']);
+
+  let ref = firestore.collection('nossqregistration').doc(uid);
+
+  let getDoc = ref.get()
+  .then(doc => {
+    if (!doc.exists) {
+
+      // no such user exists
+      res.render('index_4', {msg: 'Invalid Credentials while updating Registration details'});
+      sessionStorage1.removeItem(keys);
+
+    } else {
+      
+      ref.update(item).then(function(){
+
+        let getDoc2 = ref.get()
+        .then(doc => {
+          var datausers = doc.data();
+          res.render('dashboardNossq', {p_n: datausers['PrincipalName'],
+                                       e_m_i:  datausers['Mail'],
+                                       p_c_n: datausers['Contact1'] ,
+                                       a_c_n:  datausers['Contact2'],
+                                       p_s_d:  datausers['Password'],
+                                       n_o_s:  datausers['NameOfSchool'],
+                                       c_s:  datausers['City'],
+                                       p_c:  datausers['PIN'],
+                                       n_o_st: datausers['NoOfStudents'],
+                                       wdv: encrypt(req.body.name, "nossq")});
+              });
+  })
+  .catch(err => {
+    console.log('Error getting document', err);
+    sessionStorage1.removeItem(keys);
+    res.render('index_4', {msg: 'Something went wrong, Please try again later.'});
+});
+}
+});
+}
+
+});
 
 
 
